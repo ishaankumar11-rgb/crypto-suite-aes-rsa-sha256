@@ -27,3 +27,8 @@ Arrowstack Cyber Security Internship, Task 1. A Python CLI for encryption and ha
 - RSA encrypts only small data (under 300 bytes); use AES for files.
 - Files are read fully into memory.
 - Educational project, not audited for production use.
+
+## Test Results
+- Unit tests: 3 of 3 passed (AES round-trip, AES wrong password rejected, RSA round-trip). Output: `evidence/unittest_output.txt`
+- SHA-256 validation: this tool's output matches `sha256sum` exactly. Output: `evidence/hash_check.txt`
+- Manual check: decrypting with a wrong password prints "FAILED: wrong password or file was tampered"
