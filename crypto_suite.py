@@ -9,54 +9,64 @@ from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
 OAEP = padding.OAEP(mgf=padding.MGF1(hashes.SHA256()),
                     algorithm=hashes.SHA256(), label=None)
 
+def read_file(path):
+    with open(path, "rb") as f:
+        return f.read()
+
+def write_file(path, data):
+    with open(path, "wb") as f:
+        f.write(data)
+
 def derive_key(password, salt):
     return Scrypt(salt=salt, length=32, n=2**15, r=8, p=1).derive(password.encode())
 
 def aes_encrypt(inp, out):
     pw = getpass.getpass("Password: ")
     salt, nonce = os.urandom(16), os.urandom(12)
-    ct = AESGCM(derive_key(pw, salt)).encrypt(nonce, open(inp, "rb").read(), None)
-    open(out, "wb").write(salt + nonce + ct)
+    ct = AESGCM(derive_key(pw, salt)).encrypt(nonce, read_file(inp), None)
+    write_file(out, salt + nonce + ct)
     print(f"Encrypted -> {out}")
 
 def aes_decrypt(inp, out):
     pw = getpass.getpass("Password: ")
-    blob = open(inp, "rb").read()
+    blob = read_file(inp)
     salt, nonce, ct = blob[:16], blob[16:28], blob[28:]
     try:
         pt = AESGCM(derive_key(pw, salt)).decrypt(nonce, ct, None)
     except Exception:
         sys.exit("FAILED: wrong password or file was tampered")
-    open(out, "wb").write(pt)
+    write_file(out, pt)
     print(f"Decrypted -> {out}")
 
 def rsa_keygen(prefix):
     pw = getpass.getpass("Private key password: ")
     key = rsa.generate_private_key(public_exponent=65537, key_size=3072)
-    open(f"{prefix}_private.pem", "wb").write(key.private_bytes(
+    priv_path, pub_path = f"{prefix}_private.pem", f"{prefix}_public.pem"
+    write_file(priv_path, key.private_bytes(
         serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8,
         serialization.BestAvailableEncryption(pw.encode())))
-    open(f"{prefix}_public.pem", "wb").write(key.public_key().public_bytes(
+    os.chmod(priv_path, 0o600)  # only the owner can read the private key
+    write_file(pub_path, key.public_key().public_bytes(
         serialization.Encoding.PEM,
         serialization.PublicFormat.SubjectPublicKeyInfo))
-    print(f"Keys saved: {prefix}_private.pem, {prefix}_public.pem")
+    print(f"Keys saved: {priv_path}, {pub_path}")
 
 def rsa_encrypt(pub, inp, out):
-    key = serialization.load_pem_public_key(open(pub, "rb").read())
-    data = open(inp, "rb").read()
+    key = serialization.load_pem_public_key(read_file(pub))
+    data = read_file(inp)
     if len(data) > 300:
         sys.exit("RSA can only encrypt small data (<300 bytes). Use AES for files.")
-    open(out, "wb").write(key.encrypt(data, OAEP))
+    write_file(out, key.encrypt(data, OAEP))
     print(f"Encrypted -> {out}")
 
 def rsa_decrypt(priv, inp, out):
     pw = getpass.getpass("Private key password: ")
-    key = serialization.load_pem_private_key(open(priv, "rb").read(), pw.encode())
+    key = serialization.load_pem_private_key(read_file(priv), pw.encode())
     try:
-        pt = key.decrypt(open(inp, "rb").read(), OAEP)
+        pt = key.decrypt(read_file(inp), OAEP)
     except Exception:
         sys.exit("FAILED: wrong key or corrupted data")
-    open(out, "wb").write(pt)
+    write_file(out, pt)
     print(f"Decrypted -> {out}")
 
 def sha256_file(path):

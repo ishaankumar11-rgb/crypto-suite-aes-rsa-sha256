@@ -1,0 +1,14 @@
+test_aes_roundtrip (test_crypto_suite.T.test_aes_roundtrip) ... ok
+test_aes_wrong_password (test_crypto_suite.T.test_aes_wrong_password) ... ok
+test_rsa_roundtrip (test_crypto_suite.T.test_rsa_roundtrip) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.560s
+
+OK
+Encrypted -> /tmp/tmpn_755tsy/a.enc
+Decrypted -> /tmp/tmpn_755tsy/b.txt
+Encrypted -> /tmp/tmp5dyjmw9h/a.enc
+Keys saved: /tmp/tmpo7x1cz65/k_private.pem, /tmp/tmpo7x1cz65/k_public.pem
+Encrypted -> /tmp/tmpo7x1cz65/r.enc
+Decrypted -> /tmp/tmpo7x1cz65/r.txt
